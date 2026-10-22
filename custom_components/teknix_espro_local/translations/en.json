@@ -75,6 +75,7 @@
       "step_last_gvs": { "name": "Last DHW step" }
     },
     "switch": {
+      "main_switch": { "name": "Main switch" },
       "heating": { "name": "Heating" },
       "dhw": { "name": "DHW" }
     }

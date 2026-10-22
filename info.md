@@ -7,7 +7,7 @@ Home Assistant integration for **Teknix ESPRO** (and compatible LEMAX / TRIANCO)
 - Native **climate entity** for thermostat-style control
 - Live sensors: room / coolant / DHW temperatures, current power, error code
 - Number controls: heating setpoint, room setpoint, DHW setpoint, power level, hysteresis, safety limits
-- Switches: heating on/off, DHW on/off, force pump
+- Switches: main switch (boiler on/off), heating on/off, DHW on/off, force pump
 - Selects: heating mode (by coolant/air), 3-way valve, phase mode
 - Services: `set_field` (write any INFO field) and `send_raw` (advanced debugging)
 - English and Ukrainian translations
@@ -17,7 +17,7 @@ Home Assistant integration for **Teknix ESPRO** (and compatible LEMAX / TRIANCO)
 The boiler's Wi-Fi module runs Tasmota internally and talks to the MCU over UART. The integration:
 
 1. Subscribes to the Tasmota serial topic via MQTT
-2. Parses the boiler's `I1&...Z` status frame into ~45 named fields
+2. Parses the boiler's `I0&...Z` / `I1&...Z` status frame into ~45 named fields
 3. Configures Tasmota rules for 30s INFO polling automatically
 4. Sends T-prefix write commands (with checksum) to change settings
 5. Uses `Backlog` to refresh state within ~1 second of any change

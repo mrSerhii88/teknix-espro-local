@@ -10,7 +10,7 @@ DEFAULT_MODEL = "ESPRO"
 CONF_TASMOTA_TOPIC = "tasmota_topic"
 
 # INFO field index → field name (from Teknix Swagger API Param enum).
-# parts[N+1] in the raw "I1&...Z" frame is INFO field N.
+# parts[N+1] in the raw "I<s>&...Z" frame is INFO field N.
 INFO_FIELD_NAMES: dict[int, str] = {
     0: "TEMPER_BOILER_OUT",
     1: "TEMPER_ROOM_WHOLE",
@@ -59,14 +59,19 @@ INFO_FIELD_NAMES: dict[int, str] = {
     44: "STAT_PROG_GVS",
 }
 
-# Reverse lookup: field name → index
-INFO_FIELD_INDICES: dict[str, int] = {v: k for k, v in INFO_FIELD_NAMES.items()}
+# Reverse lookup: field name → index.
+# SWITCH_BOILER (main on/off) is the digit after "I", not one of the 45 fields.
+# Its T-index 01 is one below field 0 (T-index 02), so it writes as index -1.
+INFO_FIELD_INDICES: dict[str, int] = {
+    "SWITCH_BOILER": -1,
+    **{v: k for k, v in INFO_FIELD_NAMES.items()},
+}
 
 # INFO frame constants
-INFO_FRAME_PREFIX = "I1&"
+INFO_FRAME_PREFIX = "I"
 INFO_FRAME_TERMINATOR = "Z"
 INFO_FRAME_FIELD_COUNT = 45  # fields 0..44 + checksum
-INFO_FRAME_PARTS_COUNT = 47  # "I1" + 45 fields + "checksumZ"
+INFO_FRAME_PARTS_COUNT = 47  # "I<s>" + 45 fields + "checksumZ"
 
 # MCU responses
 MCU_RESPONSE_OK = "OK"

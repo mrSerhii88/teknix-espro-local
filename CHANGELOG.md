@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] — 2026-10-22
+
+### Added
+- **Main switch** (`switch.<device>_main_switch`) — boiler on/off via `SWITCH_BOILER` (T-index 01). While it is off the boiler answers `OK` to heating/DHW commands but ignores them, so the heating switch alone could not turn the boiler back on after a power outage. `set_field` also accepts `SWITCH_BOILER`.
+
+### Fixed
+- **All INFO frames were dropped while the boiler main switch was off** — the digit after `I` is the `SWITCH_BOILER` parameter (1 = on, 0 = off), not a constant, and the checksum is `SWITCH_BOILER + sum(fields)`. The parser accepted only `I1&` with `sum + 1`. After a power outage the boiler came back with `I0&...`, so every entity kept its last value and HA still showed the boiler as heating. The parser now accepts any digit and exposes it as `BoilerState.switch_boiler`.
+
 ## [0.1.1] — 2026-04-11
 
 ### Fixed

@@ -75,6 +75,7 @@
       "step_last_gvs": { "name": "Крок останньої зміни ГВП" }
     },
     "switch": {
+      "main_switch": { "name": "Головний вимикач" },
       "heating": { "name": "Опалення" },
       "dhw": { "name": "ГВП" }
     }

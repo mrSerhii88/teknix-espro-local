@@ -29,6 +29,17 @@ class TeknixSwitchDescription(SwitchEntityDescription):
 
 SWITCHES: tuple[TeknixSwitchDescription, ...] = (
     TeknixSwitchDescription(
+        key="main_switch",
+        field="SWITCH_BOILER",
+        is_on_fn=lambda s: s.switch_boiler == 1,
+        teknix_description=(
+            "Main boiler on/off (SWITCH_BOILER, the digit after 'I' in the "
+            "INFO frame). While it is off the boiler accepts but ignores the "
+            "heating and DHW switches. The boiler can come back off after a "
+            "power loss."
+        ),
+    ),
+    TeknixSwitchDescription(
         key="heating",
         field="HEATING_MODE",
         is_on_fn=lambda s: s["HEATING_MODE"] == 1,

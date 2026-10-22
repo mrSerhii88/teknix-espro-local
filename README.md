@@ -9,7 +9,7 @@ Based on reverse-engineered serial protocol between the boiler's Wi-Fi module an
 - Native **climate entity** for thermostat-style control
 - Live sensors: room temperature, coolant temperature, DHW tank temperature, current power consumption, error code
 - Number controls: heating setpoint, room setpoint, DHW tank setpoint, max power, hysteresis, DHW safety limits
-- Switches: heating on/off, DHW on/off
+- Switches: main switch (boiler on/off), heating on/off, DHW on/off
 - Select: heating mode (by coolant / by air)
 - Binary sensors: legionella cycle, priority consumer input, programmer status
 - Services: `set_field` (write any INFO field) and `send_raw` (advanced debugging)
@@ -148,7 +148,7 @@ data:
 
 ## Protocol Notes
 
-- **INFO format**: `I1&<45 comma-separated fields>&<checksum>Z`. Checksum = `sum(fields) + 1`.
+- **INFO format**: `I<s>&<45 comma-separated fields>&<checksum>Z`. `s` = `SWITCH_BOILER`, the main on/off (1 = on, 0 = off). Checksum = `s + sum(fields)`.
 - **T-command format**: `T<index 2d><value 2d><00 pad><digit-sum checksum 2d>Z`. Index = INFO field + 2. Checksum = sum of individual digits.
 - **Field naming** comes from the public Teknix Swagger at `https://api.teknix.pro/v3/api-docs` (the `Param` enum).
 
@@ -184,6 +184,7 @@ Every entity is documented below with a short description. Entities marked ⚠�
 | Hysteresis | 4 `TEMPER_DIFF` | Temperature differential for heating cycles (0.1-2.0 °C). Smaller = tighter control but more cycling. |
 | DHW tank setpoint | 7 `TEMPER_TANK` | Target DHW tank temperature (30-60 °C). Only meaningful with DHW connected. |
 | Heating mode ⚠️ | 9 `STEP_LAST_HEATING` | `by_coolant` (1) regulates outlet water; `by_air` (2) regulates room temperature. Setting to `by_coolant` makes the boiler heat hard regardless of room temperature. |
+| Main switch | `SWITCH_BOILER` (digit after `I`, T-index 01) | Boiler on/off. While off, the boiler ignores the heating and DHW switches. Can come back off after a power loss. |
 | Heating | 10 `HEATING_MODE` | Main heating on/off. Bound to climate HVAC mode. |
 | DHW | 11 `GVS_MODE` | DHW (tap water heating) on/off. |
 
