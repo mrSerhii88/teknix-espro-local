@@ -137,12 +137,12 @@ SENSORS: tuple[TeknixSensorDescription, ...] = (
         key="p6_consumer_priority",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda s: s["P6_CONSUMER_PRIORITY"] * 2,
+        value_fn=lambda s: s["P6_CONSUMER_PRIORITY"] * 2.5,
         teknix_description=(
             "Service parameter P6: power limit applied when the boiler's "
             "'priority consumer' physical input is active (e.g. when a "
             "high-load appliance on the same circuit draws current). Stored "
-            "internally as relay count, shown here in kW."
+            "internally as relay count; ESPRO-15 has six 2.5 kW stages."
         ),
     ),
     TeknixSensorDescription(

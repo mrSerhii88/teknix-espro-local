@@ -48,9 +48,12 @@ def _x10(v: float) -> int:
     return int(round(v * 10))
 
 
-def _half_kw(v: float) -> int:
-    """Divide by 2 (for P4_MAX_POWER_HEAT which stores kW/2)."""
-    return int(v) // 2
+def _relay_count(v: float) -> int:
+    """ESPRO-15: six 2.5 kW stages; reject unsafe/non-stage values."""
+    stages = round(v / 2.5)
+    if not 1 <= stages <= 6 or abs(v - stages * 2.5) > 0.001:
+        raise ValueError("ESPRO-15 power must be 2.5, 5, 7.5, 10, 12.5 or 15 kW")
+    return int(stages)
 
 
 NUMBERS: tuple[TeknixNumberDescription, ...] = (
@@ -92,16 +95,16 @@ NUMBERS: tuple[TeknixNumberDescription, ...] = (
         key="power_level",
         field="P4_MAX_POWER_HEAT",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
-        native_min_value=2,
-        native_max_value=12,
-        native_step=2,
+        native_min_value=2.5,
+        native_max_value=15,
+        native_step=2.5,
         mode=NumberMode.SLIDER,
-        value_fn=lambda s: s["P4_MAX_POWER_HEAT"] * 2,
-        encode_fn=_half_kw,
+        value_fn=lambda s: s["P4_MAX_POWER_HEAT"] * 2.5,
+        encode_fn=_relay_count,
         teknix_description=(
             "Maximum heating power in kilowatts (service parameter P4). "
             "Stored internally as number of active heating element relays; "
-            "each relay = 2 kW. For a 12 kW boiler the max is 6 relays."
+            "ESPRO-15: each relay = 2.5 kW; six relays = 15 kW."
         ),
         teknix_warning=(
             "Do not exceed your boiler's nameplate power rating. The raw "
@@ -188,12 +191,12 @@ NUMBERS: tuple[TeknixNumberDescription, ...] = (
         key="p5_max_power_gvs",
         field="P5_MAX_POWER_GVS",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
-        native_min_value=2,
-        native_max_value=12,
-        native_step=2,
+        native_min_value=2.5,
+        native_max_value=15,
+        native_step=2.5,
         entity_category=EntityCategory.CONFIG,
-        value_fn=lambda s: s["P5_MAX_POWER_GVS"] * 2,
-        encode_fn=_half_kw,
+        value_fn=lambda s: s["P5_MAX_POWER_GVS"] * 2.5,
+        encode_fn=_relay_count,
         teknix_description=(
             "Service parameter P5: maximum heating power when operating in "
             "DHW mode. Stored as relay count, shown in kW. Equivalent to P4 "

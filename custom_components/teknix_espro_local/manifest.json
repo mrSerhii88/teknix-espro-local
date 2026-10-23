@@ -1,13 +1,13 @@
 {
   "domain": "teknix_espro_local",
   "name": "Teknix ESPRO Boiler Local",
-  "codeowners": ["@vitaliy-kovalenko"],
+  "codeowners": ["@mrSerhii88"],
   "config_flow": true,
   "dependencies": ["mqtt"],
-  "documentation": "https://github.com/vitaliy-kovalenko/teknix-espro-local",
+  "documentation": "https://github.com/mrSerhii88/teknix-espro-local",
   "integration_type": "device",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/vitaliy-kovalenko/teknix-espro-local/issues",
+  "issue_tracker": "https://github.com/mrSerhii88/teknix-espro-local/issues",
   "requirements": [],
-  "version": "0.1.2"
+  "version": "0.1.3"
 }

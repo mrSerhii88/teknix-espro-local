@@ -8,10 +8,13 @@ Tasmota Rule2 polls the MCU every 30s on its own.
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
+from time import monotonic
 
 from homeassistant.components import mqtt
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
     CMND_TOPIC_TEMPLATE,
@@ -27,6 +30,7 @@ from .const import (
 from .protocol import BoilerState, build_backlog_payload, build_t_command
 
 _LOGGER = logging.getLogger(__name__)
+STALE_FRAME_SECONDS = 90
 
 
 class TeknixCoordinator(DataUpdateCoordinator[BoilerState]):
@@ -43,20 +47,37 @@ class TeknixCoordinator(DataUpdateCoordinator[BoilerState]):
         self.state_topic = STAT_SERIAL_TOPIC_TEMPLATE.format(topic=topic)
         self.cmnd_topic = CMND_TOPIC_TEMPLATE.format(topic=topic)
         self._unsub_mqtt = None
+        self._unsub_watchdog = None
+        self._last_valid_frame = monotonic()
 
     async def async_start(self) -> None:
         """Subscribe to MQTT, ensure Tasmota rules, trigger first poll."""
+        self._last_valid_frame = monotonic()
         self._unsub_mqtt = await mqtt.async_subscribe(
             self.hass, self.state_topic, self._handle_message
+        )
+        self._unsub_watchdog = async_track_time_interval(
+            self.hass, self._check_freshness, timedelta(seconds=10)
         )
         await self._ensure_tasmota_rules()
         # Trigger an immediate INFO poll so we don't wait 30s for first data.
         await self._publish(f"{self.cmnd_topic}/SerialSend1", "INFO")
 
     async def async_stop(self) -> None:
+        if self._unsub_watchdog is not None:
+            self._unsub_watchdog()
+            self._unsub_watchdog = None
         if self._unsub_mqtt is not None:
             self._unsub_mqtt()
             self._unsub_mqtt = None
+
+    @callback
+    def _check_freshness(self, _now) -> None:
+        """Expire cached state after three missed 30-second INFO polls."""
+        if self.last_update_success and monotonic() - self._last_valid_frame > STALE_FRAME_SECONDS:
+            self.async_set_update_error(
+                UpdateFailed("No valid boiler INFO frame for over 90 seconds")
+            )
 
     async def _ensure_tasmota_rules(self) -> None:
         """Configure the Tasmota-side rules and settings we rely on.
@@ -85,6 +106,7 @@ class TeknixCoordinator(DataUpdateCoordinator[BoilerState]):
         if state is None:
             # Not an INFO frame (could be OK/ER/OER echo or fragment)
             return
+        self._last_valid_frame = monotonic()
         self.async_set_updated_data(state)
 
     async def async_set_field(self, field_name: str, value: int) -> None:
