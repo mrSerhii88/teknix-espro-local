@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] — 2026-10-23 — ESPRO-15 maintained fork
+
+### Fixed
+- P4/P5 use six 2.5 kW stages (2.5–15 kW), with rejection of invalid/non-stage writes.
+- P6 priority-consumer limit uses 2.5 kW per stage.
+- Cached telemetry expires after more than 90 seconds without a valid INFO frame
+  (checked every 10 seconds). Corrupt frames do not refresh the timeout; valid
+  frames restore availability. The watchdog is cancelled on unload.
+
+### Added
+- Offline regression tests, CI test job, and Ukrainian/English maintenance documentation.
+- HACS/manifest links point to the maintained fork. Domain and entity keys are unchanged.
+
+### Scope
+- Supported hardware for this fork release: tested ESPRO-15 only. Not ESPRO-12.
+- No household automations, credentials or private telemetry are included.
+- Based on upstream v0.1.2; upstream license and authorship are retained.
+
 ## [0.1.2] — 2026-10-22
 
 ### Added

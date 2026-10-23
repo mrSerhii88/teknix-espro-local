@@ -1,13 +1,19 @@
-# Teknix ESPRO Boiler Local
+# Teknix ESPRO-15 Local — Serhii fork
 
-Home Assistant custom integration for **Teknix ESPRO** (and compatible LEMAX / TRIANCO) electric heating boilers — 100% local control via the built-in Tasmota Wi-Fi module. No Teknix cloud account required.
+> **ESPRO-15 only:** six 2.5 kW stages, validated power writes, and a 90-second
+> valid-telemetry watchdog. Not for ESPRO-12 or unverified hardware revisions.
+> Based on [Vitalii Kovalenko's upstream v0.1.2](https://github.com/vitaliy-kovalenko/teknix-espro-local).
+> See [fork changes, installation, safety and update policy](docs/FORK.md)
+> (Українською / English). Existing entity IDs and the integration domain are preserved.
+
+Home Assistant custom integration for the tested **Teknix ESPRO-15** electric heating boiler — 100% local control via the built-in Tasmota Wi-Fi module. No Teknix cloud account required. Other models supported by upstream are not validated by this fork.
 
 Based on reverse-engineered serial protocol between the boiler's Wi-Fi module and its MCU.
 
 ## What you get
 
 - Native **climate entity** for thermostat-style control
-- Live sensors: room temperature, coolant temperature, DHW tank temperature, current power consumption, error code
+- Live sensors: room temperature, coolant temperature, DHW tank temperature, error code; a separate diagnostic sensor reports rated (not live) power
 - Number controls: heating setpoint, room setpoint, DHW tank setpoint, max power, hysteresis, DHW safety limits
 - Switches: main switch (boiler on/off), heating on/off, DHW on/off
 - Select: heating mode (by coolant / by air)
@@ -56,7 +62,7 @@ If you can already reach the boiler's web UI on your LAN (for example because yo
 
 ## Requirements
 
-- A **Teknix ESPRO / LEMAX ProPLUS / TRIANCO AZTEC** boiler with the stock Wi-Fi module (runs Tasmota 8.5.1 internally)
+- A **Teknix ESPRO-15 with six 2.5 kW stages** and the stock Tasmota Wi-Fi module; not an ESPRO-12 or an unverified revision
 - Home Assistant **2024.4.0** or later
 - The **MQTT integration** configured in HA, connected to the same broker as the boiler
 - **The boiler itself already connected to your local MQTT broker** — see the prerequisite section above
@@ -67,7 +73,7 @@ If you can already reach the boiler's web UI on your LAN (for example because yo
 
 1. Open HACS in Home Assistant.
 2. Click the 3-dot menu in the top-right → **Custom repositories**.
-3. Repository: `https://github.com/vitaliy-kovalenko/teknix-espro-local`, Type: **Integration**, click Add.
+3. Repository: `https://github.com/mrSerhii88/teknix-espro-local`, Type: **Integration**, click Add. For an existing installation, follow the [migration guide](docs/FORK.md) first.
 4. Find "Teknix ESPRO Boiler Local" in the HACS integration list and click Download.
 5. Restart Home Assistant.
 6. Settings → **Devices & Services** → **Add Integration** → search for "Teknix ESPRO Boiler Local".
@@ -162,7 +168,7 @@ Every entity is documented below with a short description. Entities marked ⚠�
 
 | Entity | Description |
 |--------|-------------|
-| `climate.teknix_espro_boiler` ⚠️ | Native HA thermostat. HEAT/OFF ↔ `HEATING_MODE`, target temperature ↔ `TEMPER_ROOM_WHOLE`, current temperature ↔ `SENSOR_ROOM`, HVAC action ↔ current `POWER`. **Set "Heating mode" to "by air" for this to work intuitively**, otherwise the boiler regulates by coolant temp and ignores the room setpoint. |
+| `climate.teknix_espro_boiler` ⚠️ | Native HA thermostat. HEAT/OFF ↔ `HEATING_MODE`, target temperature ↔ `TEMPER_ROOM_WHOLE`, current temperature ↔ `SENSOR_ROOM`. HVAC action is inferred from coolant/air temperature difference, not measured heater power. **Set "Heating mode" to "by air" for intuitive room control**, otherwise the boiler regulates by coolant temp and ignores the room setpoint. |
 
 ### Main sensors
 
@@ -171,7 +177,7 @@ Every entity is documented below with a short description. Entities marked ⚠�
 | Air temperature | 39 `SENSOR_ROOM` | Room temperature from the boiler's external NTC sensor (must be ≥50 cm from the boiler per the manual). |
 | Coolant temperature | 37 `SENSOR_BOILER_OUT` | Water temperature at the boiler outlet — the main "system temperature" reading. |
 | DHW tank temperature | 38 `SENSOR_TANK_GVS` | DHW tank temperature sensor. ⚠️ If no DHW tank is connected, reads the ambient NTC input, not actual water. |
-| Current power ⚠️ | 29+30 `POWER`+`POWER_FRACT` | Power draw reported by the MCU. **Formula is unverified against a real kWh meter — treat as approximate.** |
+| Rated power (diagnostic) | 29+30 `POWER`+`POWER_FRACT` | Static nameplate power: `(POWER × 100 + POWER_FRACT) / 10`. **Not live consumption.** Use a separate power meter to verify actual heating. |
 | Error code | 5 `CODE_ERROR` | Boiler error code (E1-E7). E1 = current leak, E2 = water flow fault, E3 = coolant sensor fault, E4 = air sensor fault, E5 = DHW sensor fault, E6 = overheat, E7 = no remote connection. **E1 and E3 are dangerous.** |
 
 ### Main controls
@@ -180,7 +186,7 @@ Every entity is documented below with a short description. Entities marked ⚠�
 |--------|-----------|-------------|
 | Heating setpoint | 0 `TEMPER_BOILER_OUT` | Target outlet water temperature (30-80 °C). Primary setpoint in "by coolant" mode. |
 | Room setpoint | 1 `TEMPER_ROOM_WHOLE` | Target room temperature (10-26 °C). Primary setpoint in "by air" mode. Also bound to climate entity target. |
-| Power | 17 `P4_MAX_POWER_HEAT` | Max heating power in kW. Stored as relay count × 2 kW. ⚠️ Don't exceed your boiler's nameplate rating. |
+| Power | 17 `P4_MAX_POWER_HEAT` | ESPRO-15 max heating power: relay count × 2.5 kW, valid stages 2.5–15 kW. ⚠️ Don't exceed your boiler's nameplate rating. |
 | Hysteresis | 4 `TEMPER_DIFF` | Temperature differential for heating cycles (0.1-2.0 °C). Smaller = tighter control but more cycling. |
 | DHW tank setpoint | 7 `TEMPER_TANK` | Target DHW tank temperature (30-60 °C). Only meaningful with DHW connected. |
 | Heating mode ⚠️ | 9 `STEP_LAST_HEATING` | `by_coolant` (1) regulates outlet water; `by_air` (2) regulates room temperature. Setting to `by_coolant` makes the boiler heat hard regardless of room temperature. |
@@ -246,10 +252,10 @@ These INFO fields can still be read/written via the `set_field` service if you n
 
 ## Known Limitations
 
-- **Only tested on one ESPRO-12**. Other hardware revisions may have protocol differences. Please file issues with your boiler model and sample INFO frames.
+- **This fork is tested on ESPRO-15 only**. Its hard-coded 2.5 kW stages are not correct for ESPRO-12 or unverified models. Upstream originally targeted ESPRO-12; do not confuse the two releases.
 - **Multi-field T-commands are not supported** — each write is one field at a time. The boiler's backend-composed multi-field atomic writes (seen in Teknix cloud traffic as longer T-commands like `T12011102032404000021Z`) are not yet decoded.
 - **Weekly programmer is read-only** — you can see if it's active (STAT_PROG_* binary sensors) but not edit schedules. Use HA's native scheduler instead.
-- **Dangerous fields** like phase mode and 3-way valve are exposed but should NOT be changed unless you know what you're doing. Wrong values can damage the boiler.
+- **Dangerous fields** like phase mode and 3-way valve are not exposed as ordinary entities. Advanced raw services can still write them and must not be used without verified hardware knowledge. Wrong values can damage the boiler.
 
 ## Translations
 

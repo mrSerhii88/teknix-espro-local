@@ -1,14 +1,16 @@
-# Teknix ESPRO Boiler Local
+# Teknix ESPRO-15 Local — Serhii fork
 
-Home Assistant integration for **Teknix ESPRO** (and compatible LEMAX / TRIANCO) electric heating boilers — 100% local control via the stock Tasmota Wi-Fi module. No Teknix cloud account required.
+Maintained fork for the tested **Teknix ESPRO-15 with six 2.5 kW stages**. Not for ESPRO-12 or unverified revisions. Local MQTT control, no Teknix cloud account required. Based on Vitalii Kovalenko's upstream v0.1.2; MIT license retained.
 
 ## Features
 
 - Native **climate entity** for thermostat-style control
-- Live sensors: room / coolant / DHW temperatures, current power, error code
+- Live sensors: room / coolant / DHW temperatures, error code; separate rated-power diagnostic (not live consumption)
 - Number controls: heating setpoint, room setpoint, DHW setpoint, power level, hysteresis, safety limits
-- Switches: main switch (boiler on/off), heating on/off, DHW on/off, force pump
-- Selects: heating mode (by coolant/air), 3-way valve, phase mode
+- Switches: main switch (boiler on/off), heating on/off, DHW on/off
+- Select: heating mode (by coolant/air)
+- P4/P5 power stages: 2.5, 5, 7.5, 10, 12.5, 15 kW; P6 display corrected
+- Telemetry unavailable after more than 90 seconds without a valid INFO frame; checked every 10 seconds
 - Services: `set_field` (write any INFO field) and `send_raw` (advanced debugging)
 - English and Ukrainian translations
 
@@ -28,7 +30,7 @@ The boiler's Wi-Fi module runs Tasmota internally and talks to the MCU over UART
 
 ## Requirements
 
-- Teknix / LEMAX / TRIANCO boiler with stock Wi-Fi module
+- Tested ESPRO-15 (six 2.5 kW stages) with stock Wi-Fi module
 - MQTT integration configured in Home Assistant and connected to the same broker as the boiler
 - Home Assistant 2024.4.0+
 
@@ -36,4 +38,4 @@ The boiler's Wi-Fi module runs Tasmota internally and talks to the MCU over UART
 
 After installation, add via Settings → Devices & Services → Add Integration → "Teknix ESPRO Boiler Local". Enter your Tasmota topic (e.g. `boiler_kotel`) and the integration handles the rest.
 
-See the [full README](https://github.com/vitaliy-kovalenko/teknix-espro-local) for protocol details, field mapping, and the reverse-engineering story.
+See the [README](https://github.com/mrSerhii88/teknix-espro-local) and [fork maintenance/migration guide](https://github.com/mrSerhii88/teknix-espro-local/blob/main/docs/FORK.md). Domain and entity keys are unchanged. The watchdog does not replace hardware protection or guarantee that an offline boiler can be stopped remotely.
